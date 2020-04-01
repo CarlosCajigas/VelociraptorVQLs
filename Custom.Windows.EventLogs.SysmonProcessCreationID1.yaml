@@ -1,0 +1,29 @@
+name: Custom.Windows.EventLogs.SysmonProcessCreationID1
+description: |
+  If sysmon is installed an using the SwiftOnSecurity configuration,
+  this VQL will parse the sysmon event log for Sysmon Event ID 1
+  which will yield process creation
+  by @carlos_cajigas
+
+precondition: SELECT OS From info() where OS = 'windows'
+
+parameters:
+  - name: processRegex
+    default: .
+  - name: parentProcessRegex
+    default: .
+  - name: sysmonLogFile
+    default: c:/Windows/System32/winevt/Logs/Microsoft-Windows-Sysmon%4Operational.evtx
+
+sources:
+  - queries:
+      - SELECT EventData.Image AS Image,
+               EventData.CommandLine AS CommandLine,
+               EventData.ParentImage AS ParentImage,
+               EventData.User AS User,
+               EventData.UtcTime As Time,
+               EventData.Hashes AS Hashes
+        FROM parse_evtx(filename=sysmonLogFile)
+        WHERE System.EventID.Value = 1
+        AND EventData.Image =~ processRegex
+        AND EventData.ParentImage =~ parentProcessRegex
