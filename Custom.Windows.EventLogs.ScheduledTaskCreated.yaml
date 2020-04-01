@@ -1,0 +1,25 @@
+name: Custom.Windows.EventLogs.ScheduledTaskCreated
+description: |
+  Parse TaskScheduler Event Log for event ID 106 which is Task Creation
+  by @carlos_cajigas
+
+precondition: SELECT OS From info() where OS = 'windows'
+
+parameters:
+  - name: taskRegex
+    default: .
+    
+  - name: taskSchedulerLogFile
+    default: C:/Windows/System32/winevt/Logs/Microsoft-Windows-TaskScheduler%4Operational.evtx
+sources:
+  - queries:
+      - SELECT System.EventID.Value AS EventID,
+               EventData.TaskName AS TaskName,
+               System.Computer AS Computer,
+               EventData.UserContext AS UserContext,
+               System.Execution.ProcessID AS PID,
+               timestamp(epoch=System.TimeCreated.SystemTime) as Time,
+               System.TimeCreated.SystemTime AS TimeUTC
+        FROM parse_evtx(filename=taskSchedulerLogFile)
+        WHERE System.EventID.Value = 106
+        AND EventData.TaskName =~ taskRegex
