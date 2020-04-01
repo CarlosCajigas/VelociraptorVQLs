@@ -1,0 +1,28 @@
+name: Custom.Windows.EventLogs.ProcessCreation
+description: |
+  Parse Security Event Log for ProcessCreation EventID 4688
+  by @carlos_cajigas
+
+precondition: SELECT OS From info() where OS = 'windows'
+
+parameters:
+  - name: processRegex
+    default: .
+  - name: parentProcessRegex
+    default: .
+  - name: securityLogFile
+    default: C:/Windows/System32/Winevt/Logs/Security.evtx
+
+sources:
+  - queries:
+      - SELECT EventData.NewProcessName AS ProcessName,
+               EventData.CommandLine AS CommandLine,
+               EventData.ParentProcessName AS ParentProcessName,
+               EventData.SubjectUserName AS UserName,
+               EventData.ProcessId AS ProcessId,
+               timestamp(epoch=System.TimeCreated.SystemTime) as Time,
+               System.TimeCreated.SystemTime AS TimeUTC
+        FROM parse_evtx(filename=securityLogFile)
+        WHERE System.EventID.Value = 4688
+        and EventData.NewProcessName =~ processRegex
+        and EventData.ParentProcessName =~ parentProcessRegex
