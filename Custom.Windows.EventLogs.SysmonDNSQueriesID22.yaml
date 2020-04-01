@@ -1,0 +1,26 @@
+name: Custom.Windows.EventLogs.SysmonDNSQueriesID22
+description: |
+  If sysmon is installed an using the SwiftOnSecurity configuration,
+  this VQL will parse the sysmon event log for Sysmon Event ID 22
+  which will yield DNS Queries.  by @carlos_cajigas
+
+precondition: SELECT OS From info() where OS = 'windows'
+
+parameters:
+  - name: queryRegex
+    default: .
+    
+  - name: sysmonLogFile
+    default: c:/Windows/System32/winevt/Logs/Microsoft-Windows-Sysmon%4Operational.evtx
+
+sources:
+  - queries:
+      - SELECT EventData.QueryName AS Query,
+               EventData.Image AS Image,
+               EventData.ProcessId AS ProcessId,
+               EventData.UtcTime AS Time,
+               EventData.QueryResults As QueryResults               
+        FROM parse_evtx(filename=sysmonLogFile)
+        WHERE System.EventID.Value = 22
+        AND EventData.QueryName =~ queryRegex
+ 
