@@ -1,0 +1,28 @@
+name: Custom.Windows.System.QueryVSSUpload
+description: |
+  After you have run Custom.Windows.System.QueryVSS and 
+  you have queried the available Shadow Volumes,
+  use this to upload a specific file from a VSS to 
+  the server.
+  by @carlos_cajigas
+
+parameters:
+  - name: vssNumber
+    description: Provie a VSS number to recover the file(s) from.
+      Example, if from VSS1, then provide a 1. Default is 1
+    default: 1
+  - name: locationRegex
+    description: A regex applied to the full of the file(s) desired
+    default: /Windows/System32/winevt/**/Sec*.evtx
+
+sources:
+  - queries:
+      - SELECT 
+            Data.mft as MFTRecord, 
+            Name as FileName, 
+            Size as FileSize, 
+            ModTime as ModificationTimeinVSS, 
+            FullPath as LocationInVSS,
+            upload(file=FullPath) as Upload
+          FROM glob(globs='\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy'
+            + vssNumber + locationRegex, accessor='ntfs')
