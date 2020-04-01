@@ -1,0 +1,17 @@
+name: Custom.Windows.System.QueryVSS
+description: |
+  Query The available Volume Shadows 
+  by @carlos_cajigas
+
+precondition: SELECT OS From info() where OS = 'windows'
+
+sources:
+  - queries:
+      - SELECT 
+            Data.ID AS ShadowCopyID, 
+            Data.InstallDate AS CreationTime, 
+            Data.VolumeName AS OriginalVolume, 
+            FullPath AS ShadowCopyVolume
+          FROM glob(globs='/*', accessor='ntfs')
+          WHERE ShadowCopyID
+          ORDER by FullPath
